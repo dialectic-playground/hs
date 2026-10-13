@@ -53,7 +53,8 @@ check-repository:
 toolchain:
 	python3 --version || python --version
 	make --version | head -1
-	ghc --numeric-version | tee /dev/stderr | grep -q '^9\.14\.'
+	@version="$$(ghc --numeric-version)"; echo "$$version"; echo "$$version" | grep -q '^9\.14\.' \
+		|| { echo "toolchain: expected a version matching ^9\.14\." >&2; exit 1; }
 	cabal --version | head -1
 
 projects:
