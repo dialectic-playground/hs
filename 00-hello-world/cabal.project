@@ -1,0 +1,5 @@
+-- dp-hello depends only on base, which ships with GHC, so builds need no package index:
+-- no `cabal update`, no network. cabal.project.freeze pins the resolved versions.
+packages: .
+active-repositories: :none
+tests: True

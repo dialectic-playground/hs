@@ -16,7 +16,7 @@ This repository implements the eleven projects of the
 specified to the byte by the curriculum and verified by its black-box tests on Linux, macOS,
 and Windows.
 
-**Status:** repository and toolchain ready; no projects implemented yet.
+**Status:** Implemented projects: 00-hello-world.
 
 ## Haskell at a glance
 
@@ -35,9 +35,33 @@ and Windows.
 | Release line | GHC 9.14 |
 | Build / package tool | cabal |
 | Container image | `haskell:9.14-slim-bookworm`, pinned by digest ([`Containerfile`](Containerfile)) |
-| Native CI | haskell-actions/setup (GHC 9.14, latest cabal) |
+| Native CI | haskell-actions/setup (GHC 9.14.1, latest cabal) |
+| Lint / format | hlint 3.10, ormolu 0.9.0.0 (pinned prebuilt release binaries) |
 
-`make toolchain` verifies that the container and native toolchains are on this release line.
+`make toolchain` verifies that the container and native toolchains are on this release line
+and that hlint and ormolu are the pinned versions.
+
+| Task | Tool | Project hook |
+| :-- | :-- | :-- |
+| Build | `cabal build` (`-Wall -Wcompat -Werror`), executable copied to `bin/<tool>` | `make all` |
+| Unit tests | `cabal test` (an `exitcode-stdio-1.0` suite with a small assertion runner) | `make test` (then the public black-box suite) |
+| Lint | `cabal build all` with `-Werror`, `hlint src`, `ormolu --mode check` | `make lint` |
+| Format | `ormolu --mode inplace` | `make format` |
+
+Each project is a cabal package (`<tool>.cabal`, `cabal.project`, and the
+`cabal.project.freeze` lock file in the project directory) with a library in `src/lib/`, the
+executable in `src/app/`, and unit tests in `src/test/`. The projects use only packages that
+ship with GHC, so `cabal.project` disables the Hackage index (`active-repositories: :none`):
+builds need no `cabal update` and no network. Dependabot does not support cabal; regenerate
+the freeze file with `cabal freeze` when the GHC version changes (the native CI pins GHC
+9.14.1, the container image's version, for that reason).
+
+hlint and ormolu are not part of the GHC image. The `Containerfile` installs their official
+prebuilt release binaries (x86_64 Linux; on other hosts use `DP_PLATFORM=linux/amd64`), and
+the native CI installs the same versions for Linux, macOS (hlint under Rosetta 2), and
+Windows. Both are verified by SHA-256. To work natively, install the same versions (for
+example from the [hlint](https://github.com/ndmitchell/hlint/releases) and
+[ormolu](https://github.com/tweag/ormolu/releases) release pages) and put them on `PATH`.
 
 ## Layout
 

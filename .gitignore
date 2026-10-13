@@ -10,3 +10,12 @@ __pycache__/
 *.swp
 .DS_Store
 Thumbs.db
+
+# Repository-specific: Haskell (cabal) build output and local configuration
+dist-newstyle/
+bin/
+cabal.project.local
+cabal.project.local~
+.ghc.environment.*
+*.hi
+*.o
