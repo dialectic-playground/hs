@@ -54,7 +54,7 @@ toolchain:
 	python3 --version || python --version
 	make --version | head -1
 	@version="$$(ghc --numeric-version)"; echo "$$version"; echo "$$version" | grep -q '^9\.14\.' \
-		|| { echo "toolchain: expected a version matching ^9\.14\." >&2; exit 1; }
+		|| { echo 'toolchain: expected a version matching ^9\.14\.' >&2; exit 1; }
 	cabal --version | head -1
 
 projects:
