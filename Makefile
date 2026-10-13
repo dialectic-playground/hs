@@ -13,7 +13,7 @@
 
 # Project directories whose implementation is complete enough to build and test, in
 # curriculum order (for example: 00-hello-world 01-echo). CI covers exactly these.
-IMPLEMENTED :=
+IMPLEMENTED := 00-hello-world
 
 DP_HOST_GOALS += help roundtrip
 include tools/container.mk
@@ -22,6 +22,9 @@ ifeq ($(DP_DELEGATE),)
 SHELL := /bin/sh
 .DEFAULT_GOAL := check
 CURRICULUM_ROOT := sdlc-curriculum
+# Lint and format tools, pinned to the same versions in the Containerfile and ci.yml.
+HLINT_VERSION := 3.10
+ORMOLU_VERSION := 0.9.0.0
 STANDARD_FILES := LICENSE README.md Containerfile Makefile .editorconfig .gitattributes \
 	.gitignore .gitmodules .devcontainer/devcontainer.json .github/CODEOWNERS \
 	.github/dependabot.yml .github/workflows/ci.yml tools/dp-run tools/container.mk \
@@ -42,20 +45,26 @@ check-repository:
 	done; \
 	marker="TEMPLATE"; marker="$$marker:"; \
 	if grep -rn --exclude-dir=.git --exclude-dir=.github --exclude-dir=tools \
-	        --exclude-dir=$(CURRICULUM_ROOT) "$$marker" .; then \
+	        --exclude-dir=$(CURRICULUM_ROOT) --exclude-dir=dist-newstyle "$$marker" .; then \
 		echo "replace every $$marker marker listed above"; status=1; \
 	fi; \
 	[ $$status -eq 0 ] && echo "repository: standard files, $(CURRICULUM_ROOT), and project workspaces present"; \
 	exit $$status
 
 # Prints each tool's version and fails unless it is on the repository's release line
-# (GHC 9.14), so the container image and the native CI toolchains stay in step.
+# (GHC 9.14) or, for hlint and ormolu, the pinned version (Containerfile and ci.yml), so the
+# container image and the native CI toolchains stay in step.
 toolchain:
 	python3 --version || python --version
 	make --version | head -1
 	@version="$$(ghc --numeric-version)"; echo "$$version"; echo "$$version" | grep -q '^9\.14\.' \
 		|| { echo 'toolchain: expected a version matching ^9\.14\.' >&2; exit 1; }
 	cabal --version | head -1
+	@version="$$(hlint --numeric-version | tr -d '\r')"; echo "hlint $$version"; [ "$$version" = "$(HLINT_VERSION)" ] \
+		|| { echo 'toolchain: expected hlint $(HLINT_VERSION)' >&2; exit 1; }
+	@version="$$(ormolu --version | head -1 | tr -d '\r')"; echo "$$version"; [ "$${version%% *}" = ormolu ] \
+		&& [ "$$(echo "$$version" | cut -d' ' -f2)" = "$(ORMOLU_VERSION)" ] \
+		|| { echo 'toolchain: expected ormolu $(ORMOLU_VERSION)' >&2; exit 1; }
 
 projects:
 	@[ -n "$(strip $(IMPLEMENTED))" ] || echo "projects: none implemented yet (IMPLEMENTED is empty)"

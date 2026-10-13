@@ -6,7 +6,8 @@
 # project listed in IMPLEMENTED in the root Makefile.
 # - Container (podman): `make check` in the toolchain image (./Containerfile), on Linux.
 # - Native (Linux, macOS, Windows): `make check roundtrip` with DP_RUNTIME=local;
-#   toolchain: haskell-actions/setup (GHC 9.14, latest cabal).
+#   toolchain: haskell-actions/setup (GHC 9.14.1, latest cabal), plus hlint and ormolu
+#   (pinned prebuilt release binaries, as in the Containerfile).
 # - Shared tooling, DCO, and the required "CI result" check, as in every repository.
 #
 # Actions are pinned to full commit SHAs (organization policy); Dependabot keeps them current.
@@ -72,11 +73,61 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install make && echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
 
+      # GHC 9.14.1, the container image's version: cabal.project.freeze pins its boot packages.
       - name: Set up GHC 9.14 and cabal
         uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
         with:
-          ghc-version: '9.14'
+          ghc-version: '9.14.1'
           cabal-version: latest
+
+      # The same pinned prebuilt release binaries as the Containerfile, verified by SHA-256.
+      # hlint publishes x86_64 binaries only; macOS arm64 runs them under Rosetta 2.
+      - name: Install hlint and ormolu (pinned, SHA-256 verified)
+        env:
+          HLINT_VERSION: '3.10'
+          ORMOLU_VERSION: '0.9.0.0'
+        run: |
+          case "$RUNNER_OS-$RUNNER_ARCH" in
+            Linux-X64)
+              hlint_asset=x86_64-linux.tar.gz; hlint_sha=ccabc8802a58154699a3583b8dddc5ea2e6d65753a62c45c0e80088ebb16b42b
+              ormolu_asset=x86_64-linux; ormolu_sha=367eb4969986504cf171f71f91e24ea5d7d9d97c41701e8e6eef9b642fd0d201 ;;
+            macOS-ARM64)
+              hlint_asset=x86_64-osx.tar.gz; hlint_sha=7a3d208fb117999336b35a32a68c476f95e22e232357fea5862250f14493cae5
+              ormolu_asset=aarch64-darwin; ormolu_sha=39efe03a0f41385bd5a1a7f874acf195fb5f6d09673be96a24f708508bb86a20 ;;
+            macOS-X64)
+              hlint_asset=x86_64-osx.tar.gz; hlint_sha=7a3d208fb117999336b35a32a68c476f95e22e232357fea5862250f14493cae5
+              ormolu_asset=x86_64-darwin; ormolu_sha=6d098117122b10d26c0a2976beeb729b322a23825789b7f1817541dc6041ab19 ;;
+            Windows-X64)
+              hlint_asset=x86_64-windows.zip; hlint_sha=9dc50b66771920464910472c5ae2b8eb83d33d4eadebe6d99bf512452ca22a20
+              ormolu_asset=x86_64-windows; ormolu_sha=afcde0c0a9bace9c8ae9bd98d027620b2901947670dfc54f63fa44c221d5b19d ;;
+            *) echo "::error::no prebuilt hlint/ormolu for $RUNNER_OS-$RUNNER_ARCH"; exit 1 ;;
+          esac
+          dir="$RUNNER_TEMP/dp-hs-lint"
+          mkdir -p "$dir"
+          curl -fsSLo "$dir/hlint-archive" \
+            "https://github.com/ndmitchell/hlint/releases/download/v$HLINT_VERSION/hlint-$HLINT_VERSION-$hlint_asset"
+          curl -fsSLo "$dir/ormolu.zip" \
+            "https://github.com/tweag/ormolu/releases/download/$ORMOLU_VERSION/ormolu-$ormolu_asset.zip"
+          python - "$dir" "$hlint_sha" "$ormolu_sha" <<'EOF'
+          import hashlib, os, pathlib, stat, sys, tarfile, zipfile
+          root, hlint_sha, ormolu_sha = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3]
+          for name, expected in (("hlint-archive", hlint_sha), ("ormolu.zip", ormolu_sha)):
+              actual = hashlib.sha256((root / name).read_bytes()).hexdigest()
+              if actual != expected:
+                  sys.exit(f"{name}: SHA-256 {actual}, expected {expected}")
+          hlint = root / "hlint-archive"
+          if zipfile.is_zipfile(hlint):
+              zipfile.ZipFile(hlint).extractall(root / "hlint")
+          else:
+              with tarfile.open(hlint) as archive:
+                  archive.extractall(root / "hlint", filter="data")
+          zipfile.ZipFile(root / "ormolu.zip").extractall(root / "ormolu")
+          for exe in [*root.glob("hlint/*/hlint"), root / "ormolu" / "ormolu"]:
+              if exe.exists():
+                  exe.chmod(exe.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as path:
+              path.write(f"{next(root.glob('hlint/hlint-*'))}\n{root / 'ormolu'}\n")
+          EOF
 
       - name: make check roundtrip
         run: make check roundtrip

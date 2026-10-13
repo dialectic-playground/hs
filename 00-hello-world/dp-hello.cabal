@@ -1,0 +1,61 @@
+cabal-version:   3.0
+name:            dp-hello
+version:         1.0.0
+synopsis:        Print a greeting to standard output (curriculum project 00-hello-world)
+license:         MIT
+author:          dialectic-playground
+category:        Console
+build-type:      Simple
+tested-with:     GHC ==9.14.1
+
+common warnings
+  ghc-options: -Wall -Wcompat -Werror
+
+-- Pure units (parsing, validation, greeting construction, diagnostics) and the thin output
+-- adapter. base only: no third-party packages.
+library
+  import:           warnings
+  hs-source-dirs:   src/lib
+  default-language: GHC2021
+  exposed-modules:
+    DpHello.App
+    DpHello.Cli
+    DpHello.Diagnostics
+    DpHello.Greeting
+    DpHello.Output
+    DpHello.Validate
+
+  build-depends:    base >=4.22 && <4.23
+
+executable dp-hello
+  import:           warnings
+  hs-source-dirs:   src/app
+  main-is:          Main.hs
+  default-language: GHC2021
+  -- Command-line +RTS options and GHCRTS are ignored: every argument reaches the parser
+  -- (CONV-07 ... CONV-12) and no environment variable changes behavior (NFR-07).
+  ghc-options:      -rtsopts=ignoreAll
+  build-depends:
+    , base      >=4.22 && <4.23
+    , dp-hello
+
+-- A plain assertion runner (base; directory, a GHC boot package, for temporary files):
+-- prints each failure and exits non-zero.
+test-suite unit
+  import:           warnings
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   src/test
+  main-is:          Main.hs
+  other-modules:
+    AppTest
+    CliTest
+    GreetingTest
+    OutputTest
+    TestKit
+    ValidateTest
+
+  default-language: GHC2021
+  build-depends:
+    , base       >=4.22 && <4.23
+    , directory  >=1.3  && <1.4
+    , dp-hello

@@ -1,5 +1,6 @@
 # Keeps GitHub Actions (SHA-pinned) and the toolchain image digest current.
-# Package ecosystems (cabal) are added when the first project's manifests exist.
+# Dependabot does not support cabal (Haskell), so project dependencies are pinned by each
+# project's cabal.project.freeze and updated by hand.
 version: 2
 updates:
   - package-ecosystem: github-actions
