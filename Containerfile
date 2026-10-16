@@ -6,6 +6,12 @@
 # release line is a deliberate change (keep `make toolchain` and the native CI in step).
 FROM docker.io/library/haskell:9.14-slim-bookworm@sha256:9a00205d8e32b54cdc642ae8f37dce1041b87253d43011c22653eb60ad8ce814
 
+# Fail a RUN step if any command in a pipeline fails (the checksum pipes below).
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Debian keeps only the current version of each package, so apt versions cannot be pinned
+# reproducibly; the base image is pinned by digest instead.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends make python3 curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -21,17 +27,16 @@ ARG ORMOLU_SHA256=367eb4969986504cf171f71f91e24ea5d7d9d97c41701e8e6eef9b642fd0d2
 RUN set -eu; \
     arch="$(dpkg --print-architecture)"; \
     [ "$arch" = amd64 ] || { echo "hlint/ormolu: no prebuilt $arch binaries; use DP_PLATFORM=linux/amd64" >&2; exit 1; }; \
-    cd /tmp; \
-    curl -fsSLo hlint.tar.gz "https://github.com/ndmitchell/hlint/releases/download/v${HLINT_VERSION}/hlint-${HLINT_VERSION}-x86_64-linux.tar.gz"; \
-    echo "${HLINT_SHA256}  hlint.tar.gz" | sha256sum -c -; \
+    curl -fsSLo /tmp/hlint.tar.gz "https://github.com/ndmitchell/hlint/releases/download/v${HLINT_VERSION}/hlint-${HLINT_VERSION}-x86_64-linux.tar.gz"; \
+    echo "${HLINT_SHA256}  /tmp/hlint.tar.gz" | sha256sum -c -; \
     mkdir -p /opt/hlint; \
-    tar -xzf hlint.tar.gz -C /opt/hlint --strip-components=1; \
+    tar -xzf /tmp/hlint.tar.gz -C /opt/hlint --strip-components=1; \
     ln -s /opt/hlint/hlint /usr/local/bin/hlint; \
-    curl -fsSLo ormolu.zip "https://github.com/tweag/ormolu/releases/download/${ORMOLU_VERSION}/ormolu-x86_64-linux.zip"; \
-    echo "${ORMOLU_SHA256}  ormolu.zip" | sha256sum -c -; \
-    python3 -m zipfile -e ormolu.zip /usr/local/bin; \
+    curl -fsSLo /tmp/ormolu.zip "https://github.com/tweag/ormolu/releases/download/${ORMOLU_VERSION}/ormolu-x86_64-linux.zip"; \
+    echo "${ORMOLU_SHA256}  /tmp/ormolu.zip" | sha256sum -c -; \
+    python3 -m zipfile -e /tmp/ormolu.zip /usr/local/bin; \
     chmod 0755 /usr/local/bin/ormolu; \
-    rm -f hlint.tar.gz ormolu.zip; \
+    rm -f /tmp/hlint.tar.gz /tmp/ormolu.zip; \
     hlint --version; ormolu --version
 
 ENV DP_IN_CONTAINER=1
