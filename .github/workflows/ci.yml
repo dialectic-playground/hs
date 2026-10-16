@@ -80,15 +80,15 @@ jobs:
       - name: Set up GHC 9.14 and cabal
         uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
         with:
-          ghc-version: '9.14.1'
+          ghc-version: "9.14.1"
           cabal-version: latest
 
       # The same pinned prebuilt release binaries as the Containerfile, verified by SHA-256.
       # hlint publishes x86_64 binaries only; macOS arm64 runs them under Rosetta 2.
       - name: Install hlint and ormolu (pinned, SHA-256 verified)
         env:
-          HLINT_VERSION: '3.10'
-          ORMOLU_VERSION: '0.9.0.0'
+          HLINT_VERSION: "3.10"
+          ORMOLU_VERSION: "0.9.0.0"
         run: |
           case "$RUNNER_OS-$RUNNER_ARCH" in
             Linux-X64)
