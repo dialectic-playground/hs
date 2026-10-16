@@ -48,7 +48,7 @@ check-repository:
 		matches=$$(git grep -n "$$marker" -- . ':!.github' ':!tools' ':!$(CURRICULUM_ROOT)'); \
 	else \
 		matches=$$(grep -rn --exclude-dir=.git --exclude-dir=.github --exclude-dir=tools \
-		        --exclude-dir=$(CURRICULUM_ROOT) --exclude-dir=dist-newstyle "$$marker" .); \
+						--exclude-dir=$(CURRICULUM_ROOT) --exclude-dir=dist-newstyle "$$marker" .); \
 	fi; \
 	if [ -n "$$matches" ]; then \
 		printf '%s\n' "$$matches"; echo "replace every $$marker marker listed above"; status=1; \

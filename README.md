@@ -1,3 +1,19 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+**Table of Contents** _generated with [DocToc](https://github.com/thlorenz/doctoc)_
+
+- [hs](#hs)
+  - [Haskell at a glance](#haskell-at-a-glance)
+  - [Toolchain](#toolchain)
+  - [Layout](#layout)
+  - [Development](#development)
+  - [Implementing a project](#implementing-a-project)
+  - [Contributing](#contributing)
+  - [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dialectic-playground/.github/main/assets/hs/dist/logo-dark.svg">
@@ -11,7 +27,7 @@ Haskell implementation of the Dialectic Playground SDLC curriculum.
 
 📖 **Documentation:** <https://dialectic-playground.github.io/docs/reference/languages/hs/>
 
-This repository implements the eleven projects of the
+This repository implements the fifty-three projects of the
 [SDLC curriculum](https://github.com/dialectic-playground/sdlc-curriculum) in Haskell. Each project is
 specified to the byte by the curriculum and verified by its black-box tests on Linux, macOS,
 and Windows.
@@ -20,33 +36,33 @@ and Windows.
 
 ## Haskell at a glance
 
-| Aspect | Haskell |
-| :-- | :-- |
-| File extension | `.hs` |
-| CLI classification | Included |
-| Image category | First-Class |
-| Access to OS primitives | High (via System.Environment primitives) |
-| Entry-point mechanism | Compiles to binary; runtime initializes and wraps options to getArgs |
+| Aspect                  | Haskell                                                              |
+| :---------------------- | :------------------------------------------------------------------- |
+| File extension          | `.hs`                                                                |
+| CLI classification      | Included                                                             |
+| Image category          | First-Class                                                          |
+| Access to OS primitives | High (via System.Environment primitives)                             |
+| Entry-point mechanism   | Compiles to binary; runtime initializes and wraps options to getArgs |
 
 ## Toolchain
 
-| | |
-| :-- | :-- |
-| Release line | GHC 9.14 |
-| Build / package tool | cabal |
-| Container image | `haskell:9.14-slim-bookworm`, pinned by digest ([`Containerfile`](Containerfile)) |
-| Native CI | haskell-actions/setup (GHC 9.14.1, latest cabal) |
-| Lint / format | hlint 3.10, ormolu 0.9.0.0 (pinned prebuilt release binaries) |
+|                      |                                                                                   |
+| :------------------- | :-------------------------------------------------------------------------------- |
+| Release line         | GHC 9.14                                                                          |
+| Build / package tool | cabal                                                                             |
+| Container image      | `haskell:9.14-slim-bookworm`, pinned by digest ([`Containerfile`](Containerfile)) |
+| Native CI            | haskell-actions/setup (GHC 9.14.1, latest cabal)                                  |
+| Lint / format        | hlint 3.10, ormolu 0.9.0.0 (pinned prebuilt release binaries)                     |
 
 `make toolchain` verifies that the container and native toolchains are on this release line
 and that hlint and ormolu are the pinned versions.
 
-| Task | Tool | Project hook |
-| :-- | :-- | :-- |
-| Build | `cabal build` (`-Wall -Wcompat -Werror`), executable copied to `bin/<tool>` | `make all` |
-| Unit tests | `cabal test` (an `exitcode-stdio-1.0` suite with a small assertion runner) | `make test` (then the public black-box suite) |
-| Lint | `cabal build all` with `-Werror`, `hlint src`, `ormolu --mode check` | `make lint` |
-| Format | `ormolu --mode inplace` | `make format` |
+| Task       | Tool                                                                        | Project hook                                  |
+| :--------- | :-------------------------------------------------------------------------- | :-------------------------------------------- |
+| Build      | `cabal build` (`-Wall -Wcompat -Werror`), executable copied to `bin/<tool>` | `make all`                                    |
+| Unit tests | `cabal test` (an `exitcode-stdio-1.0` suite with a small assertion runner)  | `make test` (then the public black-box suite) |
+| Lint       | `cabal build all` with `-Werror`, `hlint src`, `ormolu --mode check`        | `make lint`                                   |
+| Format     | `ormolu --mode inplace`                                                     | `make format`                                 |
 
 Each project is a cabal package (`<tool>.cabal`, `cabal.project`, and the
 `cabal.project.freeze` lock file in the project directory) with a library in `src/lib/`, the
@@ -65,14 +81,14 @@ example from the [hlint](https://github.com/ndmitchell/hlint/releases) and
 
 ## Layout
 
-| Path | Contents |
-| :--- | :--- |
-| `00-hello-world/` … `10-sys-monitor/` | One workspace per curriculum project: `Makefile` (with `DP_*` hooks), HLD, LLD, RTM, master test plan, and `src/` |
-| `sdlc-curriculum/` | The curriculum, as a git submodule pinned to a release tag |
-| `Makefile` | `make check` (repository, toolchain, implemented projects), `toolchain`, `projects`, `roundtrip` |
-| `Containerfile`, `.devcontainer/` | The toolchain image and the matching dev container |
-| `tools/dp-run`, `tools/container.mk` | Shared container tooling (copies of the canonical files in `dialectic-playground/.github`) |
-| `.github/workflows/ci.yml` | CI: container and native (Linux, macOS, Windows) `make` targets, shared-tooling check, DCO |
+| Path                                 | Contents                                                                                                          |
+| :----------------------------------- | :---------------------------------------------------------------------------------------------------------------- |
+| `00-hello-world/` … `52-spacecraft/` | One workspace per curriculum project: `Makefile` (with `DP_*` hooks), HLD, LLD, RTM, master test plan, and `src/` |
+| `sdlc-curriculum/`                   | The curriculum, as a git submodule pinned to a release tag                                                        |
+| `Makefile`                           | `make check` (repository, toolchain, implemented projects), `toolchain`, `projects`, `roundtrip`                  |
+| `Containerfile`, `.devcontainer/`    | The toolchain image and the matching dev container                                                                |
+| `tools/dp-run`, `tools/container.mk` | Shared container tooling (copies of the canonical files in `dialectic-playground/.github`)                        |
+| `.github/workflows/ci.yml`           | CI: container and native (Linux, macOS, Windows) `make` targets, shared-tooling check, DCO                        |
 
 ## Development
 
