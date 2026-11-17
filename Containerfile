@@ -4,7 +4,7 @@
 # Official base image pinned by multi-architecture index digest, plus make and python3 (for the
 # curriculum's black-box runner). Dependabot (docker) refreshes the digest; moving to a new
 # release line is a deliberate change (keep `make toolchain` and the native CI in step).
-FROM docker.io/library/haskell:9.14-slim-bookworm@sha256:9a00205d8e32b54cdc642ae8f37dce1041b87253d43011c22653eb60ad8ce814
+FROM docker.io/library/haskell:9.14-slim-bookworm@sha256:88a1ffbc7407b3eeebdb0ba8e77c20b843960e476ebd680f79fe3bc20c04e492
 
 # Fail a RUN step if any command in a pipeline fails (the checksum pipes below).
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
